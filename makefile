@@ -4,7 +4,8 @@ PROJECT_NAME := tuya_co2sensor_zrd
 # Set the serial port number for downloading the firmware
 DOWNLOAD_PORT := COM3
 
-COMPILE_PREFIX = C:/TelinkSDK/opt/tc32/bin/tc32
+#COMPILE_PREFIX = C:/TelinkSDK/opt/tc32/bin/tc32
+COMPILE_PREFIX = /opt/telink-IOT/tc32/bin/tc32
 
 AS      = $(COMPILE_PREFIX)-elf-as
 CC      = $(COMPILE_PREFIX)-elf-gcc
@@ -16,9 +17,12 @@ ARCH	= $(COMPILE_PREFIX)-elf-ar
 SIZE	= $(COMPILE_PREFIX)-elf-size
 
 LIBS := -lzb_router -ldrivers_8258 -lsoft-fp
+# LIBS := -lzb_ed -ldrivers_8258 -lsoft-fp
 
 
 DEVICE_TYPE = -DROUTER=1
+#DEVICE_TYPE = -DEND_DEVICE=1
+
 MCU_TYPE = -DMCU_CORE_8258=1
 BOOT_FLAG = -DMCU_CORE_8258 -DMCU_STARTUP_8258
 
@@ -28,10 +32,10 @@ OUT_PATH := ./out
 BIN_PATH := ./bin
 MAKE_INCLUDES := ./make
 TOOLS_PATH := ./tools
-BOOT_FILE := $(OUT_PATH)/bootloader.bin
+BOOT_FILE := $(BIN_PATH)/bootloader.bin
 VERSION_RELEASE := V$(shell awk -F " " '/APP_RELEASE/ {gsub("0x",""); printf "%.1f", $$3/10.0; exit}' $(SRC_PATH)/include/version_cfg.h)
 VERSION_BUILD := $(shell awk -F " " '/APP_BUILD/ {gsub("0x",""); printf "%02d", $$3; exit}' ./src/include/version_cfg.h)
-ZCL_VERSION_FILE := $(shell git log -1 --format=%cd --date=format:%Y%m%d -- src |  sed -e "'s/./\'&\',/g'" -e "'s/.$$//'")
+ZCL_VERSION_FILE := $(shell git log -1 --format=%cd --date=format:%Y%m%d -- src |  sed -e "s/./\'&\',/g" -e "s/.$$//")
 BOOT_SIZE := $(shell ls -l $(BOOT_FILE) | awk '{print $$5}')
 
 
@@ -73,7 +77,7 @@ GCC_FLAGS := \
 
 ifeq ($(strip $(ZCL_VERSION_FILE)),)
 GCC_FLAGS += \
--DBUILD_DATE="{8,'2','0','2','3','1','1','1','7'}"
+-DBUILD_DATE="{8,'2','0','2','6','1','1','2','4'}"
 else
 GCC_FLAGS += \
 -DBUILD_DATE="{8,$(ZCL_VERSION_FILE)}"
@@ -131,7 +135,7 @@ LST_FILE := $(OUT_PATH)/$(PROJECT_NAME).lst
 BIN_FILE := $(OUT_PATH)/$(PROJECT_NAME).bin
 ELF_FILE := $(OUT_PATH)/$(PROJECT_NAME).elf
 FW_FILE  := $(OUT_PATH)/firmware.bin
-BOOT_FILE := $(OUT_PATH)/bootloader.bin
+BOOT_FILE := $(BIN_PATH)/bootloader.bin
 
 SIZEDUMMY += \
 sizedummy \
@@ -184,7 +188,8 @@ main-build: clean-project $(ELF_FILE) secondary-outputs
 $(ELF_FILE): $(OBJS) $(USER_OBJS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: TC32 C Linker'
-	$(LD) --gc-sections -L $(SDK_PATH)/zigbee/lib/tc32 -L $(SDK_PATH)/platform/lib -L $(SDK_PATH)/platform/tc32 -T $(LS_FLAGS) -o "$(ELF_FILE)" "$(BOOT_FILE).o" $(OBJS) $(USER_OBJS) $(LIBS) 
+	# $(LD) --gc-sections -L $(SDK_PATH)/zigbee/lib/tc32 -L $(SDK_PATH)/platform/lib -L $(SDK_PATH)/platform/tc32 -T $(LS_FLAGS) -o "$(ELF_FILE)" "$(BOOT_FILE).o" $(OBJS) $(USER_OBJS) $(LIBS) 
+	$(LD) --gc-sections -L $(SDK_PATH)/zigbee/lib/tc32 -L $(SDK_PATH)/platform/lib -L $(SDK_PATH)/platform/tc32 -T $(LS_FLAGS) -o "$(ELF_FILE)"  $(OBJS) $(USER_OBJS) $(LIBS) 
 	@echo 'Finished building target: $@'
 	@echo ' '
 	
@@ -211,6 +216,7 @@ $(BIN_FILE): $(ELF_FILE)
 	@$(OBJCOPY) -v -O binary $(ELF_FILE)  $(BIN_FILE)
 	@python3 $(TL_CHECK) $(BIN_FILE)
 	@cat $(BIN_FILE) $(BOOT_FILE) > $(FW_FILE)
+	@echo FW file: $(FW_FILE)
 	@cp $(BIN_FILE) $(BIN_PATH)/$(PROJECT_NAME)_$(VERSION_RELEASE).$(VERSION_BUILD).bin
 	@echo 'Create zigbee OTA file'
 	@python3 $(MAKE_OTA) -ot $(PROJECT_NAME) $(BIN_PATH)/$(PROJECT_NAME)_$(VERSION_RELEASE).$(VERSION_BUILD).bin
@@ -220,7 +226,7 @@ $(BIN_FILE): $(ELF_FILE)
 endif
 
 $(OBJ_DIR)/bin_updater.o: $(OBJ_DIR)
-    @objcopy -I binary --output-target elf32-littlearm --rename-section .data=.bin_files ./updater.bin $@	 
+	@objcopy -I binary --output-target elf32-littlearm --rename-section .data=.bin_files ./updater.bin $@	 
 
 sizedummy: $(ELF_FILE)
 	@echo 'Invoking: Print Size'
