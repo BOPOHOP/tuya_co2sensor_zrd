@@ -16,12 +16,12 @@ OBJDUMP = $(COMPILE_PREFIX)-elf-objdump
 ARCH	= $(COMPILE_PREFIX)-elf-ar
 SIZE	= $(COMPILE_PREFIX)-elf-size
 
-LIBS := -lzb_router -ldrivers_8258 -lsoft-fp
-# LIBS := -lzb_ed -ldrivers_8258 -lsoft-fp
+# LIBS := -lzb_router -ldrivers_8258 -lsoft-fp
+LIBS := -lzb_ed -ldrivers_8258 -lsoft-fp
 
 
-DEVICE_TYPE = -DROUTER=1
-#DEVICE_TYPE = -DEND_DEVICE=1
+#DEVICE_TYPE = -DROUTER=1
+DEVICE_TYPE = -DEND_DEVICE=1
 
 MCU_TYPE = -DMCU_CORE_8258=1
 BOOT_FLAG = -DMCU_CORE_8258 -DMCU_STARTUP_8258
@@ -36,7 +36,9 @@ BOOT_FILE := $(BIN_PATH)/bootloader.bin
 VERSION_RELEASE := V$(shell awk -F " " '/APP_RELEASE/ {gsub("0x",""); printf "%.1f", $$3/10.0; exit}' $(SRC_PATH)/include/version_cfg.h)
 VERSION_BUILD := $(shell awk -F " " '/APP_BUILD/ {gsub("0x",""); printf "%02d", $$3; exit}' ./src/include/version_cfg.h)
 ZCL_VERSION_FILE := $(shell git log -1 --format=%cd --date=format:%Y%m%d -- src |  sed -e "s/./\'&\',/g" -e "s/.$$//")
-BOOT_SIZE := $(shell ls -l $(BOOT_FILE) | awk '{print $$5}')
+
+# BOOT_SIZE := $(shell ls -l $(BOOT_FILE) | awk '{print $$5}')
+BOOT_SIZE := 32768
 
 
 TL_CHECK = $(TOOLS_PATH)/tl_check_fw.py

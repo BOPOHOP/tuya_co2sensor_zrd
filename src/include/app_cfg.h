@@ -198,7 +198,7 @@ extern "C" {
 #define ZCL_SCENE_SUPPORT                           ON
 #define ZCL_OTA_SUPPORT                             ON
 // we need to disable ZCL_GP_SUPPORT for END_DEVICE (ZB_ED_ROLE)
-#define ZCL_GP_SUPPORT                              ON
+// #define ZCL_GP_SUPPORT                              ON
 #define ZCL_CO2_MEASUREMENT_SUPPORT                 ON
 #define ZCL_TEMPERATURE_MEASUREMENT_SUPPORT         ON
 #define ZCL_HUMIDITY_MEASUREMENT_SUPPORT            ON
